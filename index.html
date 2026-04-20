@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="中西医结合AI智能诊疗平台 - 专为基层个体诊所打造">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>中西医结合 AI 智能诊疗平台</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/patient.css">
+    <link rel="stylesheet" href="css/doctor.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- 加载遮罩 -->
+    <div id="app-loading" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring inner"></div>
+            <p>正在加载中西医智能诊疗平台...</p>
+        </div>
+    </div>
+
+    <!-- 免责声明弹窗（首次访问必显） -->
+    <div id="disclaimer-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content modal-lg disclaimer-modal">
+            <div class="modal-header bg-gradient-medical">
+                <h2><span class="icon">⚕️</span> 重要法律声明与免责条款</h2>
+            </div>
+            <div class="modal-body">
+                <div class="disclaimer-box warning">
+                    <h3><span class="icon">⚠️</span> 重要提示</h3>
+                    <p>本平台为<strong>医疗辅助工具</strong>，所有 AI 功能输出<strong>仅供执业医师参考</strong>。</p>
+                </div>
+                <div class="disclaimer-sections">
+                    <div class="disclaimer-section">
+                        <h4>1️⃣ 平台定位</h4>
+                        <p>本系统是<strong>辅助诊疗工具</strong>，不能替代执业医师的面诊和临床判断。所有诊断结论、治疗方案、用药建议均需由具有合法资质的执业医师审核确认后方可执行。</p>
+                    </div>
+                    <div class="disclaimer-section">
+                        <h4>2️⃣ AI 功能限制</h4>
+                        <ul>
+                            <li>🔬 <strong>舌苔 AI 分析</strong> — 仅供参考，不作为最终辨证依据</li>
+                            <li>📋 <strong>检验报告解读</strong> — 辅助识别异常指标，需结合临床综合判断</li>
+                            <li>🖼️ <strong>影像标注</strong> — 仅供医师参考，不替代放射科专业阅片</li>
+                            <li>🎤 <strong>语音转文字</strong> — 转录内容可能存在误差，需人工核对</li>
+                            <li>🍲 <strong>饮食方案</strong> — 营养建议仅供参考，个体差异需调整</li>
+                        </ul>
+                    </div>
+                    <div class="disclaimer-section">
+                        <h4>3️⃣ 隐私保护</h4>
+                        <p>本平台采用本地存储保护您的健康数据。所有数据存储在您使用的设备上，未经授权不会传输至第三方服务器。建议定期备份重要数据。</p>
+                    </div>
+                    <div class="disclaimer-section">
+                        <h4>4️⃣ 紧急情况处理</h4>
+                        <p class="text-danger">如遇急性疾病、突发症状或危急重症，请立即拨打 <strong>120 急救电话</strong> 或前往最近的医院急诊科就诊！本平台无法处理紧急医疗状况。</p>
+                    </div>
+                    <div class="disclaimer-section">
+                        <h4>5️⃣ 合规声明</h4>
+                        <p>本平台严格遵守《互联网诊疗管理办法》《医疗机构管理条例》等法律法规。平台内所有医生需完成资质认证方可使用诊疗功能。禁止任何形式的违规医疗行为。</p>
+                    </div>
+                </div>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="agree-disclaimer">
+                    <span>我已阅读并完全理解以上条款，同意作为辅助工具使用本平台</span>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-agree-disclaimer" class="btn btn-primary btn-lg" disabled>我已了解并同意</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <header id="app-header" class="app-header">
+        <div class="header-left">
+            <button id="btn-sidebar-toggle" class="btn-icon sidebar-toggle" title="菜单">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="logo-area">
+                <span class="logo-icon">⚕️</span>
+                <span class="logo-text">中西医智能诊疗</span>
+            </div>
+        </div>
+        <div class="header-center header-title" id="header-title">首页</div>
+        <div class="header-right">
+            <button id="btn-notifications" class="btn-icon" title="消息通知">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="badge notification-badge" id="notification-count" style="display:none;">0</span>
+            </button>
+            <div class="user-avatar" id="user-avatar-btn" title="个人中心">
+                <div class="avatar-circle" id="header-avatar">医</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside id="app-sidebar" class="sidebar">
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+        <div class="sidebar-panel">
+            <div class="sidebar-user-info" id="sidebar-user-info">
+                <div class="sidebar-avatar" id="sidebar-avatar">未登录</div>
+                <div class="sidebar-user-detail">
+                    <div class="username" id="sidebar-username">未登录用户</div>
+                    <div class="user-role" id="sidebar-role">点击登录</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav">
+                <!-- 导航菜单由 JS 动态生成 -->
+            </nav>
+            <div class="sidebar-footer">
+                <button id="btn-switch-role" class="btn btn-outline btn-sm full-width">
+                    <span class="icon">🔄</span> 切换角色
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容区域 -->
+    <main id="app-main" class="main-content">
+
+        <!-- ==================== 登录页面 ==================== -->
+        <section id="page-login" class="page active">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="login-header bg-gradient-medical">
+                        <div class="login-logo">
+                            <span class="login-logo-icon">⚕️</span>
+                            <h1>中西医结合<br>AI 智能诊疗平台</h1>
+                            <p>基层个体诊所专属 · 全设备适配</p>
+                        </div>
+                    </div>
+                    <div class="login-body">
+                        <!-- 角色切换标签 -->
+                        <div class="role-tabs">
+                            <button class="role-tab active" data-role="patient">👤 患者端</button>
+                            <button class="role-tab" data-role="doctor">👨‍⚕️ 医生端</button>
+                            <button class="role-tab" data-role="admin">⚙️ 管理端</button>
+                        </div>
+
+                        <!-- 登录表单 -->
+                        <form id="login-form" class="login-form">
+                            <input type="hidden" id="login-role" value="patient">
+                            
+                            <div class="form-group">
+                                <label><span class="icon">📱</span> 手机号码</label>
+                                <input type="tel" id="login-phone" class="form-input" placeholder="请输入手机号" maxlength="11" required>
+                            </div>
+                            
+                            <div class="form-group" id="verify-code-group">
+                                <label><span class="icon">🔢</span> 验证码</label>
+                                <div class="input-with-btn">
+                                    <input type="text" id="login-code" class="form-input" placeholder="6位验证码" maxlength="6" required>
+                                    <button type="button" id="btn-send-code" class="btn btn-outline btn-sm">获取验证码</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group" id="password-group" style="display:none;">
+                                <label><span class="icon">🔑</span> 密码</label>
+                                <input type="password" id="login-password" class="form-input" placeholder="请输入密码" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg full-width login-btn">
+                                <span>登 录</span>
+                            </button>
+                        </form>
+
+                        <div class="login-divider"><span>其他登录方式</span></div>
+
+                        <div class="social-login">
+                            <button class="social-btn wechat" id="btn-wechat-login">
+                                <span class="icon">💬</span> 微信快捷登录
+                            </button>
+                        </div>
+
+                        <div class="login-footer-links">
+                            <a href="#" id="link-register">注册新账号</a>
+                            <span class="divider">|</span>
+                            <a href="#" id="toggle-login-mode">密码登录</a>
+                        </div>
+
+                        <div class="login-compliance">
+                            <p>⚕️ 本平台为医疗辅助工具，所有AI功能仅供执业医师参考</p>
+                            <p>🔒 您的数据安全存储于本地设备</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 功能展示 -->
+                <div class="login-features">
+                    <div class="feature-card">
+                        <div class="feature-icon">👅</div>
+                        <h3>中医舌诊 AI</h3>
+                        <p>拍照上传舌苔，AI 自动分析中医体质与证候</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔬</div>
+                        <h3>报告智能解读</h3>
+                        <p>检验报告拍照上传，AI 自动识别异常指标</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎤</div>
+                        <h3>语音问诊</h3>
+                        <p>实时语音对话问诊，自动转录生成病历</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🍲</div>
+                        <h3>个性化食疗</h3>
+                        <p>根据体质病情，一键生成专属营养方案</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：首页 ==================== -->
+        <section id="page-patient-home" class="page">
+            <div class="page-header">
+                <h2>患者首页</h2>
+                <p class="subtitle">欢迎使用中西医智能诊疗平台</p>
+            </div>
+
+            <!-- 快捷入口 -->
+            <div class="quick-grid">
+                <button class="quick-btn" onclick="navigateTo('tongue')">
+                    <div class="quick-icon tongue">👅</div>
+                    <span>中医舌诊</span>
+                </button>
+                <button class="quick-btn" onclick="navigateTo('report')">
+                    <div class="quick-icon lab">🔬</div>
+                    <span>报告解读</span>
+                </button>
+                <button class="quick-btn" onclick="navigateTo('imaging')">
+                    <div class="quick-icon imaging">🖼️</div>
+                    <span>影像上传</span>
+                </button>
+                <button class="quick-btn" onclick="navigateTo('consultation')">
+                    <div class="quick-icon consult">💬</div>
+                    <span>在线问诊</span>
+                </button>
+                <button class="quick-btn" onclick="navigateTo('records')">
+                    <div class="quick-icon records">📋</div>
+                    <span>我的病历</span>
+                </button>
+                <button class="quick-btn" onclick="navigateTo('healthPlan')">
+                    <div class="quick-icon plan">🍲</div>
+                    <span>健康方案</span>
+                </button>
+                <button class="quick-btn" onclick="navigateTo('appointment')">
+                    <div class="quick-icon appoint">📅</div>
+                    <span>预约挂号</span>
+                </button>
+                <button class="quick-btn" onclick="navigateTo('medication')">
+                    <div class="quick-icon med">💊</div>
+                    <span>用药提醒</span>
+                </button>
+            </div>
+
+            <!-- 健康档案概览 -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3><span class="icon">📁</span> 我的健康档案</h3>
+                    <button class="btn btn-sm btn-link" onclick="navigateTo('profile')">完善资料 →</button>
+                </div>
+                <div class="card-body" id="patient-profile-summary">
+                    <div class="empty-state">暂无健康档案，请先完善基本信息</div>
+                </div>
+            </div>
+
+            <!-- 最近诊疗记录 -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3><span class="icon">🕐</span> 最近诊疗</h3>
+                    <button class="btn btn-sm btn-link" onclick="navigateTo('records')">查看全部 →</button>
+                </div>
+                <div class="card-body" id="recent-consultations">
+                    <div class="empty-state">暂无诊疗记录</div>
+                </div>
+            </div>
+
+            <!-- 中医科普 -->
+            <div class="card mt-20 mb-30">
+                <div class="card-header">
+                    <h3><span class="icon">📖</span> 中西医健康科普</h3>
+                </div>
+                <div class="card-body">
+                    <div class="science-grid" id="science-articles">
+                        <!-- JS 动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：中医舌诊 ==================== -->
+        <section id="page-tongue-diagnosis" class="page">
+            <div class="page-header">
+                <h2><span class="icon">👅</span> 中医 AI 舌诊分析</h2>
+                <p class="subtitle text-warning">⚠️ 本功能仅作参考，不替代医师面诊</p>
+            </div>
+
+            <!-- 上传区域 -->
+            <div class="card">
+                <div class="card-body">
+                    <label class="upload-zone" id="tongue-upload-zone" for="tongue-file-input">
+                        <div class="upload-icon">📷</div>
+                        <p class="upload-text">点击或拖拽上传舌苔照片</p>
+                        <p class="upload-hint">支持 JPG、PNG 格式，建议在自然光下拍摄舌头正面</p>
+                    </label>
+                    <input type="file" id="tongue-file-input" accept="image/*"
+                        onchange="
+                            var dbg=document.getElementById('debug-info');
+                            if(!this.files||!this.files[0]){if(dbg){dbg.style.display='block';dbg.innerHTML='⚠️ 未选文件';}return;}
+                            var f=this.files[0];
+                            if(dbg){dbg.style.display='block';dbg.innerHTML='✅ 选中:'+f.name+' ('+(f.size/1024).toFixed(1)+'KB)<br>正在读取...';}
+                            var reader=new FileReader();
+                            reader.onload=function(e){
+                                document.getElementById('tongue-image').src=e.target.result;
+                                document.getElementById('tongue-preview').style.display='block';
+                                if(dbg)dbg.innerHTML+='✅ 预览完成!';
+                                if(typeof handleTongueFileChange==='function')handleTongueFileChange(document.getElementById('tongue-file-input'));
+                            };
+                            reader.onerror=function(){if(dbg)dbg.innerHTML+='<br>❌ 读取失败!';};
+                            reader.readAsDataURL(f);
+                        ">
+
+                    <!-- 调试信息 -->
+                    <div id="debug-info" style="margin-top:10px;padding:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;display:none;"></div>
+                    <!-- 图片预览 -->
+                    <div id="tongue-preview" class="image-preview-area" style="display:none;">
+                        <img id="tongue-image" alt="舌苔照片">
+                        <div class="preview-actions">
+                            <button class="btn btn-sm btn-outline" onclick="retakeTonguePhoto()">重新拍摄</button>
+                            <button class="btn btn-sm btn-primary" onclick="
+                                var el=document.getElementById('tongue-image');
+                                if(!el||!el.src||!el.src.length||el.src.indexOf('data:')!==0){showToast&&showToast('请先上传舌苔照片','warning');return;}
+                                if(showToast)showToast('AI分析中...','info');
+                                (async function(){
+                                    try{
+                                        var result;
+                                        if(typeof analyzeTongueImage==='function'){result=await analyzeTongueImage(el);}
+                                        else{result=typeof generateDefaultTongueResult==='function'?generateDefaultTongueResult():null;}
+                                        if(typeof displayTongueAnalysis==='function')displayTongueAnalysis(result);
+                                    }catch(err){
+                                        console.error('[舌诊分析]',err);
+                                        if(typeof generateDefaultTongueResult==='function'&&typeof displayTongueAnalysis==='function'){displayTongueAnalysis(generateDefaultTongueResult());}
+                                    }
+                                    if(showToast)showToast('分析完成！','success');
+                                })();
+                            " onclick="if(window.doAnalyzeTongue)doAnalyzeTongue()">开始 AI 分析</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI 分析结果 -->
+            <div id="tongue-analysis-result" class="analysis-result" style="display:none;">
+                <div class="card mt-20">
+                    <div class="card-header result-header">
+                        <h3><span class="icon">🤖</span> AI 舌诊分析结果</h3>
+                        <span class="badge badge-warning">仅供参考</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 舌质分析 -->
+                        <div class="analysis-section">
+                            <h4>🔴 舌质分析</h4>
+                            <div class="result-grid" id="tongue-body-result"></div>
+                        </div>
+                        <!-- 舌苔分析 -->
+                        <div class="analysis-section mt-15">
+                            <h4>⚪ 舌苔分析</h4>
+                            <div class="result-grid" id="tongue-coat-result"></div>
+                        </div>
+                        <!-- 体质判断 -->
+                        <div class="analysis-section mt-15">
+                            <h4>🧬 中医体质辨识</h4>
+                            <div class="constitution-card" id="constitution-result"></div>
+                        </div>
+                        <!-- 证候参考 -->
+                        <div class="analysis-section mt-15">
+                            <h4>📋 证候参考</h4>
+                            <div id="syndrome-reference"></div>
+                        </div>
+                        <!-- 调理建议 -->
+                        <div class="analysis-section mt-15">
+                            <h4>💡 参考调理建议</h4>
+                            <div id="tongue-advice"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="saveTongueAnalysis()">保存到健康档案</button>
+                    <button class="btn btn-outline" onclick="sendToDoctor()">发送给医生</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：检验报告解读 ==================== -->
+        <section id="page-lab-report" class="page">
+            <div class="page-header">
+                <h2><span class="icon">🔬</span> 检验报告 AI 解读</h2>
+                <p class="subtitle text-warning">⚠️ 本功能仅作参考，请以医师诊断为准</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <!-- 报告类型选择 -->
+                    <div class="form-group">
+                        <label>报告类型</label>
+                        <select id="report-type-select" class="form-select">
+                            <option value="">请选择报告类型</option>
+                            <option value="blood-routine">血常规</option>
+                            <option value="urine-routine">尿常规</option>
+                            <option value="biochemistry">生化全套</option>
+                            <option value="liver-function">肝功能</option>
+                            <option value="kidney-function">肾功能</option>
+                            <option value="blood-lipid">血脂四项</option>
+                            <option value="blood-sugar">血糖/糖化血红蛋白</option>
+                            <option value="thyroid">甲状腺功能</option>
+                            <option value="coagulation">凝血功能</option>
+                            <option value="tumor-marker">肿瘤标志物</option>
+                            <option value="other">其他报告</option>
+                        </select>
+                    </div>
+
+                    <!-- 多文件批量上传区域 -->
+                    <label class="upload-zone" id="report-upload-zone" for="report-file-input" style="cursor:pointer;">
+                        <div class="upload-icon">📁</div>
+                        <p class="upload-text">点击或拖拽上传检验报告单（<strong style="color:#2563eb;">支持多文件批量上传</strong>）</p>
+                        <p class="upload-hint">支持 JPG、PNG 图片 / PDF 文件，可一次选择多个报告文件</p>
+                    </label>
+                    <input type="file" id="report-file-input" accept="image/*,.pdf" multiple
+                        onchange="
+                            handleMultiReportUpload(this);
+                        ">
+                    <!-- 多文件列表容器 -->
+                    <div id="report-files-list" style="margin-top:12px;display:none;"></div>
+                    <div id="debug-info-report" style="margin-top:10px;padding:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;display:none;"></div>
+
+                    <!-- 图片预览（JPG/PNG） -->
+                    <div id="report-preview-image" class="image-preview-area" style="display:none;">
+                        <img id="report-image" alt="检验报告">
+                        <div class="preview-actions">
+                            <button class="btn btn-sm btn-outline" onclick="retakeReportPhoto()">重新上传</button>
+                            <button class="btn btn-sm btn-primary" onclick="if(window.doAnalyzeReportImg)doAnalyzeReportImg()">AI 解读报告</button>
+                        </div>
+                    </div>
+
+                    <!-- PDF预览 -->
+                    <div id="report-preview-pdf" class="pdf-preview-area" style="display:none;">
+                        <div class="pdf-info-bar">
+                            <span class="pdf-icon">📄</span>
+                            <span id="report-pdf-name" class="pdf-name"></span>
+                            <span id="report-pdf-size" class="pdf-size"></span>
+                            <span class="badge badge-primary pdf-badge">PDF文件</span>
+                        </div>
+                        <iframe id="report-pdf-iframe" class="pdf-iframe"></iframe>
+                        <div class="preview-actions mt-15">
+                            <button class="btn btn-sm btn-outline" onclick="retakeReportPhoto()">重新上传</button>
+                            <button class="btn btn-sm btn-primary" onclick="if(window.doAnalyzeReportPDF)doAnalyzeReportPDF()">AI 解读报告</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 报告解读结果 -->
+            <div id="report-analysis-result" class="analysis-result" style="display:none;">
+                <div class="card mt-20">
+                    <div class="card-header result-header">
+                        <h3><span class="icon">🤖</span> 报告 AI 解读结果</h3>
+                        <span class="badge badge-warning">仅供参考</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 异常指标总览 -->
+                        <div class="alert alert-danger" id="abnormal-summary" style="display:none;"></div>
+                        
+                        <!-- 详细指标表格 -->
+                        <div class="table-responsive">
+                            <table class="data-table" id="report-data-table">
+                                <thead><tr><th>项目</th><th>结果</th><th>参考范围</th><th>状态</th><th>解读</th></tr></thead>
+                                <tbody id="report-tbody"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- 综合解读 -->
+                        <div class="analysis-section mt-20">
+                            <h4>📝 综合解读意见</h4>
+                            <div class="interpretation-text" id="report-interpretation"></div>
+                        </div>
+
+                        <!-- 就医建议 -->
+                        <div class="analysis-section mt-15">
+                            <h4>🏥 就医建议</h4>
+                            <div id="medical-advice"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="saveReportAnalysis()">保存报告</button>
+                    <button class="btn btn-outline" onclick="shareWithDoctor()">分享给医生</button>
+                    <button class="btn btn-outline" onclick="exportReport()">导出 PDF</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：影像上传 ==================== -->
+        <section id="page-imaging-upload" class="page">
+            <div class="page-header">
+                <h2><span class="icon">🖼️</span> 医学影像上传</h2>
+                <p class="subtitle text-warning">⚠️ AI 标注仅供参考，不替代放射科专业阅片</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>影像类型</label>
+                        <select id="imaging-type-select" class="form-select">
+                            <option value="">请选择影像类型</option>
+                            <optgroup label="📦 CT 扫描（请选具体部位）">
+                                <option value="ct-head">CT — 头颅/脑部</option>
+                                <option value="ct-chest">CT — 胸部/肺部</option>
+                                <option value="ct-abdomen">CT — 腹部/盆腔</option>
+                                <option value="ct">CT — 其他部位</option>
+                            </optgroup>
+                            <optgroup label="💀 X线检查">
+                                <option value="xray">X线 — 胸片</option>
+                            </optgroup>
+                            <optgroup label="🔊 超声">
+                                <option value="ultrasound">B超 / 彩超（腹部常规）</option>
+                                <option value="us-heart">心脏彩超</option>
+                                <option value="us-thyroid">甲状腺彩超</option>
+                                <option value="us-breast">乳腺彩超</option>
+                            </optgroup>
+                            <optgroup label="🧲 核磁共振">
+                                <option value="mri">MRI — 头颅</option>
+                                <option value="mra">MRA — 血管成像</option>
+                            </optgroup>
+                            <optgroup label="❤️ 其他">
+                                <option value="ecg">心电图 (ECG)</option>
+                                <option value="other">其他影像</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>检查部位</label>
+                        <input type="text" id="imaging-part" class="form-input" placeholder="如：胸部、腹部、头颅...">
+                    </div>
+
+                    <label class="upload-zone" id="imaging-upload-zone" for="imaging-file-input">
+                        <div class="upload-icon">📁</div>
+                        <p class="upload-text">点击上传医学影像文件</p>
+                        <p class="upload-hint">支持 DICOM、JPG、PNG 格式</p>
+                    </label>
+                    <input type="file" id="imaging-file-input" accept="image/*" multiple
+                        onchange="
+                            var dbg=document.getElementById('debug-info-imaging');
+                            if(!this.files||!this.files.length){if(dbg){dbg.style.display='block';dbg.innerHTML='⚠️ 未选择文件';}return;}
+                            var c=document.getElementById('imaging-preview-list');
+                            c.innerHTML='';c.style.display='grid';
+                            var total=this.files.length,done=0;
+                            for(var fi=0;fi<this.files.length;fi++){
+                                (function(f){
+                                    var reader=new FileReader();
+                                    reader.onload=function(e){
+                                        var d=document.createElement('div');d.className='image-list-item';
+                                        d.innerHTML='<img src=\''+e.target.result+'\' alt=\'影像\'><button onclick=\'this.parentElement.remove()\'>✕</button>';
+                                        c.appendChild(d);done++;
+                                        if(done>=total){document.getElementById('btn-analyze-imaging').disabled=false;if(dbg)dbg.innerHTML='✅ <b>选中 '+total+' 个文件，预览完成!</b>';}
+                                    };
+                                    reader.onerror=function(){if(dbg)dbg.innerHTML+='<br>❌ 读取失败!';};
+                                    reader.readAsDataURL(f);
+                                })(this.files[fi]);
+                            }
+                            if(dbg){dbg.style.display='block';dbg.innerHTML='✅ 选中 '+this.files.length+' 个文件，正在生成预览...';}
+                        ">
+                    <div id="debug-info-imaging" style="margin-top:10px;padding:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;display:none;"></div>
+
+                    <div id="imaging-preview-list" class="image-list" style="display:none;"></div>
+
+                    <button class="btn btn-primary btn-lg full-width mt-15" id="btn-analyze-imaging" onclick="if(window.doAnalyzeImaging)doAnalyzeImaging()">开始 AI 标注分析</button>
+                </div>
+            </div>
+
+            <!-- 影像分析结果 -->
+            <div id="imaging-analysis-result" class="mt-20" style="display:none;">
+                <div class="card">
+                    <div class="card-header result-header">
+                        <h3><span class="icon">🤖</span> 影像 AI 辅助标注</h3>
+                        <span class="badge badge-warning">仅供参考</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="imaging-display-area" class="imaging-viewer">
+                            <img id="imaging-display-image" alt="影像图片">
+                            <canvas id="annotation-canvas" class="annotation-layer"></canvas>
+                        </div>
+                        <div id="imaging-findings" class="mt-15"></div>
+                        <div id="imaging-impression" class="mt-15"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：在线问诊 ==================== -->
+        <section id="page-online-consult" class="page">
+            <div class="page-header">
+                <h2><span class="icon">💬</span> 在线问诊</h2>
+            </div>
+
+            <!-- 选择医生 -->
+            <div id="consult-doctor-select" class="card">
+                <div class="card-header">
+                    <h3>选择接诊医生</h3>
+                </div>
+                <div class="card-body">
+                    <div class="doctor-list" id="available-doctors">
+                        <!-- JS 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 问诊聊天区域 -->
+            <div id="consult-chat-area" style="display:none;">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- 消息动态生成 -->
+                    </div>
+                    
+                    <!-- 快捷短语 -->
+                    <div class="quick-phrases" id="quick-phrases">
+                        <button class="phrase-btn" data-text="医生您好，我想咨询一下身体不适的问题">身体不适咨询</button>
+                        <button class="phrase-btn" data-text="这是我的检查报告，麻烦帮忙看一下">发送检查报告</button>
+                        <button class="phrase-btn" data-text="请问这个药该怎么吃？">用药咨询</button>
+                        <button class="phrase-btn" data-text="想了解一下日常饮食注意事项">饮食指导</button>
+                    </div>
+
+                    <!-- 输入区域 -->
+                    <div class="chat-input-area">
+                        <button class="chat-tool-btn" id="btn-voice-input" title="语音输入">🎤</button>
+                        <textarea id="chat-input" class="chat-textarea" placeholder="输入消息..." rows="1"></textarea>
+                        <button class="chat-tool-btn" id="btn-chat-image" title="发送图片">📷</button>
+                        <button class="btn btn-primary chat-send-btn" id="btn-send-message">发送</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：我的病历 ==================== -->
+        <section id="page-my-records" class="page">
+            <div class="page-header">
+                <h2><span class="icon">📋</span> 我的病历档案</h2>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <select class="form-select form-select-sm" id="record-filter-type">
+                    <option value="all">全部类型</option>
+                    <option value="tcm">中医诊疗</option>
+                    <option value="wm">西医诊疗</option>
+                    <option value="integrated">中西医结合</option>
+                </select>
+                <select class="form-select form-select-sm" id="record-filter-time">
+                    <option value="all">全部时间</option>
+                    <option value="week">近一周</option>
+                    <option value="month">近一月</option>
+                    <option value="quarter">近三月</option>
+                </select>
+            </div>
+
+            <!-- 病历列表 -->
+            <div class="record-list" id="patient-record-list">
+                <div class="empty-state">暂无病历记录</div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：健康方案 ==================== -->
+        <section id="page-health-plan" class="page">
+            <div class="page-header">
+                <h2><span class="icon">🍲</span> 个性化健康方案</h2>
+                <p class="subtitle">根据您的体质与病情定制</p>
+            </div>
+
+            <!-- 方案类型选择 -->
+            <div class="plan-type-cards">
+                <button class="plan-type-card active" data-type="diet">
+                    <span class="plan-icon">🍚</span>
+                    <span>饮食方案</span>
+                </button>
+                <button class="plan-type-card" data-type="nutrition">
+                    <span class="plan-icon">💊</span>
+                    <span>营养补充</span>
+                </button>
+                <button class="plan-type-card" data-type="food-therapy">
+                    <span class="plan-icon">🍵</span>
+                    <span>食疗配方</span>
+                </button>
+                <button class="plan-type-card" data-type="lifestyle">
+                    <span class="plan-icon">🏃</span>
+                    <span>生活起居</span>
+                </button>
+            </div>
+
+            <!-- 当前方案显示 -->
+            <div id="current-health-plan" class="mt-20">
+                <div class="card">
+                    <div class="card-body" id="health-plan-content">
+                        <div class="empty-state">请先生成或选择健康方案</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg full-width mt-20" onclick="generateHealthPlan()">
+                🤖 AI 生成个性化方案
+            </button>
+        </section>
+
+        <!-- ==================== 患者端：预约挂号 ==================== -->
+        <section id="page-appointment" class="page">
+            <div class="page-header">
+                <h2><span class="icon">📅</span> 在线预约挂号</h2>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>选择科室</label>
+                        <select id="dept-select" class="form-select">
+                            <option value="">请选择科室</option>
+                            <option value="tcm">中医内科</option>
+                            <option value="wm-intern">西医内科</option>
+                            <option value="integrated">中西医结合科</option>
+                            <option value="acupuncture">针灸推拿科</option>
+                            <option value="pediatrics">儿科</option>
+                            <option value="gynecology">妇科</option>
+                            <option value="dermatology">皮肤科</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>选择医生</label>
+                        <select id="appoint-doctor-select" class="form-select">
+                            <option value="">请先选择科室</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>预约日期</label>
+                        <input type="date" id="appoint-date" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>预约时段</label>
+                        <div class="time-slot-group" id="time-slots">
+                            <button class="time-slot" data-time="08:00-09:00">08:00-09:00</button>
+                            <button class="time-slot" data-time="09:00-10:00">09:00-10:00</button>
+                            <button class="time-slot" data-time="10:00-11:00">10:00-11:00</button>
+                            <button class="time-slot" data-time="14:00-15:00">14:00-15:00</button>
+                            <button class="time-slot" data-time="15:00-16:00">15:00-16:00</button>
+                            <button class="time-slot" data-time="16:00-17:00">16:00-17:00</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>病情简述（选填）</label>
+                        <textarea id="appoint-symptom" class="form-textarea" placeholder="简要描述您的症状..." rows="3"></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-lg full-width" onclick="submitAppointment()">确认预约</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：用药提醒 ==================== -->
+        <section id="page-medication-reminder" class="page">
+            <div class="page-header">
+                <h2><span class="icon">💊</span> 用药提醒</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>添加用药提醒</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>药品名称</label>
+                        <input type="text" id="med-name" class="form-input" placeholder="输入药品名称">
+                    </div>
+                    <div class="form-group">
+                        <label>用法用量</label>
+                        <input type="text" id="med-dosage" class="form-input" placeholder="如：每次1片，每日3次">
+                    </div>
+                    <div class="form-group">
+                        <label>提醒时间</label>
+                        <div class="reminder-times" id="reminder-times">
+                            <input type="time" class="form-input reminder-time-input" value="08:00">
+                            <input type="time" class="form-input reminder-time-input" value="12:00">
+                            <input type="time" class="form-input reminder-time-input" value="18:00">
+                        </div>
+                        <button class="btn btn-sm btn-outline mt-10" onclick="addReminderTime()">+ 添加时间</button>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <input type="text" id="med-note" class="form-input" placeholder="饭前/饭后/其他说明">
+                    </div>
+                    <button class="btn btn-primary full-width" onclick="addMedicationReminder()">添加提醒</button>
+                </div>
+            </div>
+
+            <!-- 提醒列表 -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3>当前用药提醒</h3>
+                </div>
+                <div class="card-body" id="medication-reminder-list">
+                    <div class="empty-state">暂无用药提醒</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 患者端：健康档案 ==================== -->
+        <section id="page-health-profile" class="page">
+            <div class="page-header">
+                <h2><span class="icon">📁</span> 个人健康档案</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form id="health-profile-form">
+                        <!-- 基本信息 -->
+                        <h4 class="form-section-title">基本信息</h4>
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label>姓名</label>
+                                <input type="text" id="hp-name" class="form-input">
+                            </div>
+                            <div class="form-group flex-1">
+                                <label>性别</label>
+                                <select id="hp-gender" class="form-select">
+                                    <option value="">请选择</option>
+                                    <option value="male">男</option>
+                                    <option value="female">女</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label>出生日期</label>
+                                <input type="date" id="hp-birthdate" class="form-input">
+                            </div>
+                            <div class="form-group flex-1">
+                                <label>身高 (cm)</label>
+                                <input type="number" id="hp-height" class="form-input" placeholder="170">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label>体重 (kg)</label>
+                                <input type="number" id="hp-weight" class="form-input" placeholder="65">
+                            </div>
+                            <div class="form-group flex-1">
+                                <label>血型</label>
+                                <select id="hp-blood-type" class="form-select">
+                                    <option value="">未知</option>
+                                    <option value="A">A型</option>
+                                    <option value="B">B型</option>
+                                    <option value="AB">AB型</option>
+                                    <option value="O">O型</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 过敏史 -->
+                        <h4 class="form-section-title mt-20">过敏史与既往病史</h4>
+                        <div class="form-group">
+                            <label>药物过敏史</label>
+                            <input type="text" id="hp-allergy" class="form-input" placeholder="无或不详">
+                        </div>
+                        <div class="form-group">
+                            <label>既往病史</label>
+                            <textarea id="hp-history" class="form-textarea" placeholder="如有慢性病或其他病史请填写..." rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>家族病史</label>
+                            <textarea id="hp-family-history" class="form-textarea" placeholder="家族中是否有遗传性疾病..." rows="2"></textarea>
+                        </div>
+
+                        <!-- 中医信息 -->
+                        <h4 class="form-section-title mt-20">中医相关信息</h4>
+                        <div class="form-group">
+                            <label>自评体质（多选）</label>
+                            <div class="checkbox-group" id="constitution-checkboxes">
+                                <label class="checkbox-item"><input type="checkbox" value="qixu"> 气虚质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="yangxu"> 阳虚质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="yinxu"> 阴虚质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="tanshi"> 痰湿质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="shire"> 湿热质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="xueyu"> 血瘀质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="qiyu"> 气郁质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="tebing"> 特禀质</label>
+                                <label class="checkbox-item"><input type="checkbox" value="pinghe"> 平和质</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg full-width mt-20">保存健康档案</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 医生端：工作台首页 ==================== -->
+        <section id="page-doctor-home" class="page">
+            <div class="page-header">
+                <h2>医生工作台</h2>
+                <p class="subtitle" id="doctor-greeting">欢迎回来，医师</p>
+            </div>
+
+            <!-- 数据统计卡片 -->
+            <div class="stat-cards">
+                <div class="stat-card stat-blue">
+                    <div class="stat-number" id="stat-today-patients">0</div>
+                    <div class="stat-label">今日接诊</div>
+                </div>
+                <div class="stat-card stat-green">
+                    <div class="stat-number" id="stat-total-patients">0</div>
+                    <div class="stat-label">总患者数</div>
+                </div>
+                <div class="stat-card stat-orange">
+                    <div class="stat-number" id="stat-pending-reviews">0</div>
+                    <div class="stat-label">待处理报告</div>
+                </div>
+                <div class="stat-card stat-red">
+                    <div class="stat-number" id="stat-followups">0</div>
+                    <div class="stat-label">待随访</div>
+                </div>
+            </div>
+
+            <!-- 今日排班 -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3><span class="icon">📋</span> 今日待办</h3>
+                </div>
+                <div class="card-body" id="doctor-today-tasks">
+                    <div class="empty-state">今日暂无待办事项</div>
+                </div>
+            </div>
+
+            <!-- 待诊患者列表 -->
+            <div class="card mt-20">
+                <div class="card-header">
+                    <h3><span class="icon">👥</span> 患者队列</h3>
+                    <span class="badge badge-info" id="waiting-count">0人等待</span>
+                </div>
+                <div class="card-body">
+                    <div class="patient-queue" id="patient-queue">
+                        <div class="empty-state">暂无等待患者</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="quick-actions mt-20 mb-30">
+                <button class="action-btn action-blue" onclick="navigateTo('consultNew')">
+                    <span class="action-icon">➕</span> 新建问诊
+                </button>
+                <button class="action-btn action-green" onclick="navigateTo('prescriptions')">
+                    <span class="action-icon">📝</span> 开具处方
+                </button>
+                <button class="action-btn action-orange" onclick="navigateTo('patients')">
+                    <span class="action-icon">👥</span> 患者管理
+                </button>
+                <button class="action-btn action-purple" onclick="navigateTo('knowledgeBase')">
+                    <span class="action-icon">📚</span> 知识库
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== 医生端：新建问诊 ==================== -->
+        <section id="page-new-consultation" class="page">
+            <div class="page-header">
+                <h2><span class="icon">➕</span> 新建问诊</h2>
+            </div>
+
+            <!-- 步骤条 -->
+            <div class="step-bar">
+                <div class="step active" data-step="1"><span class="step-num">1</span><span class="step-text">患者信息</span></div>
+                <div class="step-line"></div>
+                <div class="step" data-step="2"><span class="step-num">2</span><span class="step-text">症状采集</span></div>
+                <div class="step-line"></div>
+                <div class="step" data-step="3"><span class="step-num">3</span><span class="step-text">辅助检查</span></div>
+                <div class="step-line"></div>
+                <div class="step" data-step="4"><span class="step-num">4</span><span class="step-text">诊断开方</span></div>
+            </div>
+
+            <!-- 步骤1：患者信息 -->
+            <div class="step-content active" id="consult-step-1">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>选择/搜索患者</label>
+                            <div class="input-with-btn">
+                                <input type="text" id="search-patient-input" class="form-input" placeholder="输入手机号或姓名搜索患者">
+                                <button class="btn btn-sm btn-primary" onclick="searchPatient()">搜索</button>
+                            </div>
+                        </div>
+                        <div id="patient-search-results" class="search-results"></div>
+                        
+                        <div class="divider-text">或 新建患者</div>
+                        
+                        <div class="form-group">
+                            <label>患者姓名 *</label>
+                            <input type="text" id="new-pt-name" class="form-input" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label>性别</label>
+                                <select id="new-pt-gender" class="form-select">
+                                    <option value="male">男</option>
+                                    <option value="female">女</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label>年龄</label>
+                                <input type="number" id="new-pt-age" class="form-input" placeholder="岁">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>手机号 *</label>
+                            <input type="tel" id="new-pt-phone" class="form-input" maxlength="11" required>
+                        </div>
+                        <button class="btn btn-primary" onclick="goConsultStep(2)">下一步 →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤2：症状采集 -->
+            <div class="step-content" id="consult-step-2">
+                <div class="card">
+                    <div class="card-body">
+                        <!-- 主诉输入 -->
+                        <div class="form-group">
+                            <label>主诉</label>
+                            <textarea id="cc-chief-complaint" class="form-textarea" placeholder="主要症状及持续时间，如：头痛3天，加重1天" rows="2"></textarea>
+                        </div>
+
+                        <!-- 现病史 -->
+                        <div class="form-group">
+                            <label>现病史</label>
+                            <textarea id="cc-present-illness" class="form-textarea" placeholder="详细描述发病过程..." rows="3"></textarea>
+                        </div>
+
+                        <!-- 快速症状勾选 -->
+                        <div class="form-group">
+                            <label>常见症状快速勾选</label>
+                            <div class="symptom-tags" id="symptom-tags">
+                                <span class="tag selectable" data-symptom="发热">发热</span>
+                                <span class="tag selectable" data-symptom="咳嗽">咳嗽</span>
+                                <span class="tag selectable" data-symptom="头痛">头痛</span>
+                                <span class="tag selectable" data-symptom="头晕">头晕</span>
+                                <span class="tag selectable" data-symptom="乏力">乏力</span>
+                                <span class="tag selectable" data-symptom="失眠">失眠</span>
+                                <span class="tag selectable" data-symptom="食欲不振">食欲不振</span>
+                                <span class="tag selectable" data-symptom="腹胀">腹胀</span>
+                                <span class="tag selectable" data-symptom="便秘">便秘</span>
+                                <span class="tag selectable" data-symptom="腹泻">腹泻</span>
+                                <span class="tag selectable" data-symptom="胸闷">胸闷</span>
+                                <span class="tag selectable" data-symptom="心悸">心悸</span>
+                                <span class="tag selectable" data-symptom="腰痛">腰痛</span>
+                                <span class="tag selectable" data-symptom="关节痛">关节痛</span>
+                                <span class="tag selectable" data-symptom="皮疹">皮疹</span>
+                                <span class="tag selectable" data-symptom="口干">口干</span>
+                                <span class="tag selectable" data-symptom="口苦">口苦</span>
+                                <span class="tag selectable" data-symptom="盗汗">盗汗</span>
+                                <span class="tag selectable" data-symptom="自汗">自汗</span>
+                                <span class="tag selectable" data-symptom="畏寒">畏寒</span>
+                            </div>
+                        </div>
+
+                        <!-- 语音录入 -->
+                        <div class="form-group">
+                            <label>🎤 语音快速录入</label>
+                            <div class="voice-input-area">
+                                <button class="btn voice-record-btn" id="btn-voice-record-symptom" onclick="toggleVoiceRecord('symptom')">
+                                    <span class="mic-icon">🎤</span> 点击录音
+                                </button>
+                                <p class="voice-hint">按住录音，自动转文字填入现病史</p>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-outline" onclick="goConsultStep(1)">← 上一步</button>
+                            <button class="btn btn-primary" onclick="goConsultStep(3)">下一步 →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤3：辅助检查 -->
+            <div class="step-content" id="consult-step-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="mb-15">📊 查看患者已上传的检查资料</h4>
+                        
+                        <!-- 患者检查数据面板 -->
+                        <div class="check-data-panel" id="check-data-panel">
+                            <div class="empty-state">该患者暂未上传检查资料</div>
+                        </div>
+
+                        <!-- AI 分析入口 -->
+                        <div class="ai-tools-grid mt-20">
+                            <button class="ai-tool-card" onclick="openAITool('tongue')">
+                                <span class="tool-icon">👅</span>
+                                <span>查看舌诊 AI</span>
+                            </button>
+                            <button class="ai-tool-card" onclick="openAITool('lab')">
+                                <span class="tool-icon">🔬</span>
+                                <span>查看报告解读</span>
+                            </button>
+                            <button class="ai-tool-card" onclick="openAITool('imaging')">
+                                <span class="tool-icon">🖼️</span>
+                                <span>查看影像标注</span>
+                            </button>
+                        </div>
+
+                        <div class="btn-group mt-20">
+                            <button class="btn btn-outline" onclick="goConsultStep(2)">← 上一步</button>
+                            <button class="btn btn-primary" onclick="goConsultStep(4)">下一步 →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤4：诊断与开方 -->
+            <div class="step-content" id="consult-step-4">
+                <!-- 西医诊断 -->
+                <div class="card mb-20">
+                    <div class="card-header">
+                        <h3><span class="icon">🏥</span> 西医诊断</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>初步诊断</label>
+                            <input type="text" id="dx-wm-diagnosis" class="form-input" placeholder="如：上呼吸道感染">
+                        </div>
+                        <div class="form-group">
+                            <label>鉴别诊断</label>
+                            <textarea id="dx-differential" class="form-textarea" placeholder="需要排除的疾病..." rows="2"></textarea>
+                        </div>
+                        
+                        <!-- 西医处方 -->
+                        <h4 class="form-section-title">西药处方</h4>
+                        <div id="wm-prescription-items">
+                            <div class="prescription-item">
+                                <input type="text" class="form-input drug-name" placeholder="药品名称">
+                                <input type="text" class="form-input drug-spec" placeholder="规格">
+                                <input type="text" class="form-input drug-usage" placeholder="用法用量">
+                                <input type="text" class="form-input drug-days" placeholder="天数">
+                                <button class="btn btn-sm btn-danger remove-drug-btn" onclick="removeDrug(this)">×</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="addWMDrug()">+ 添加药品</button>
+                    </div>
+                </div>
+
+                <!-- 中医诊断 -->
+                <div class="card mb-20">
+                    <div class="card-header">
+                        <h3><span class="icon">🌿</span> 中医辨证</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label>中医证型</label>
+                                <select id="dx-tcm-pattern" class="form-select">
+                                    <option value="">请选择/手动输入</option>
+                                    <option value="风寒束表">风寒束表证</option>
+                                    <option value="风热犯肺">风热犯肺证</option>
+                                    <option value="肝郁气滞">肝郁气滞证</option>
+                                    <option value="脾胃虚弱">脾胃虚弱证</option>
+                                    <option value="肾阳不足">肾阳不足证</option>
+                                    <option value="肝肾阴虚">肝肾阴虚证</option>
+                                    <option value="痰湿阻滞">痰湿阻滞证</option>
+                                    <option value="湿热蕴结">湿热蕴结证</option>
+                                    <option value="气血两虚">气血两虚证</option>
+                                    <option value="血瘀阻络">血瘀阻络证</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label>病位</label>
+                                <input type="text" id="dx-tcm-location" class="form-input" placeholder="肺、脾胃、肝...">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>病机概括</label>
+                            <textarea id="dx-tcm-pathogenesis" class="form-textarea" placeholder="简要描述病因病机..." rows="2"></textarea>
+                        </div>
+
+                        <!-- 中医方剂 -->
+                        <h4 class="form-section-title">中药方剂</h4>
+                        <div class="form-group">
+                            <label>方名</label>
+                            <div class="input-with-btn">
+                                <input type="text" id="tcm-formula-name" class="form-input" placeholder="方剂名称或自定义">
+                                <button class="btn btn-sm btn-outline" onclick="openFormulaLibrary()">📚 选方</button>
+                            </div>
+                        </div>
+                        <div id="tcm-prescription-items">
+                            <div class="prescription-item tcm-item">
+                                <input type="text" class="form-input herb-name" placeholder="中药名">
+                                <input type="text" class="form-input herb-weight" placeholder="克数(g)">
+                                <select class="form-select herb-method">
+                                    <option value="煎服">煎服</option>
+                                    <option value="后下">后下</option>
+                                    <option value="先煎">先煎</option>
+                                    <option value="包煎">包煎</option>
+                                    <option value="烊化">烊化</option>
+                                    <option value="冲服">冲服</option>
+                                </select>
+                                <button class="btn btn-sm btn-danger remove-drug-btn" onclick="removeHerb(this)">×</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="addTCMHerb()">+ 添加药材</button>
+                        
+                        <div class="form-group mt-15">
+                            <label>煎服法</label>
+                            <textarea id="tcm-decoction" class="form-textarea" placeholder="每日一剂，水煎服，早晚分服..." rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 诊疗建议 -->
+                <div class="card mb-20">
+                    <div class="card-header">
+                        <h3><span class="icon">💡</span> 诊疗建议 & 医嘱</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>治疗建议</label>
+                            <textarea id="dx-advice" class="form-textarea" placeholder="治疗及生活建议..." rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>注意事项</label>
+                            <textarea id="dx-precautions" class="form-textarea" placeholder="饮食禁忌、复诊时间等..." rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>随访安排</label>
+                            <input type="date" id="dx-followup-date" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-outline" onclick="goConsultStep(3)">← 上一步</button>
+                    <button class="btn btn-success btn-lg" onclick="saveMedicalRecord()">💾 保存电子病历</button>
+                    <button class="btn btn-primary btn-lg" onclick="generatePatientPlan()">🍲 生成健康方案</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 医生端：处方管理 ==================== -->
+        <section id="page-prescription" class="page">
+            <div class="page-header">
+                <h2><span class="icon">📝</span> 处方管理</h2>
+            </div>
+            <div class="tabs">
+                <button class="tab active" data-tab="wm-prescriptions">西药处方</button>
+                <button class="tab" data-tab="tcm-prescriptions">中药处方</button>
+            </div>
+            <div class="tab-content active" id="tab-wm-prescriptions">
+                <div id="wm-prescription-list" class="prescription-list">
+                    <div class="empty-state">暂无西药处方记录</div>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-tcm-prescriptions">
+                <div id="tcm-prescription-list" class="prescription-list">
+                    <div class="empty-state">暂无中药处方记录</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 医生端：患者管理 ==================== -->
+        <section id="page-patient-mgmt" class="page">
+            <div class="page-header">
+                <h2><span class="icon">👥</span> 患者管理</h2>
+            </div>
+
+            <!-- 搜索筛选 -->
+            <div class="filter-bar">
+                <input type="text" id="patient-search" class="form-input" placeholder="搜索患者姓名/手机号">
+                <select class="form-select form-select-sm" id="patient-category-filter">
+                    <option value="all">全部分类</option>
+                    <option value="chronic">慢病患者</option>
+                    <option value="acute">急性期</option>
+                    <option value="followup">随访中</option>
+                    <option value="recovery">康复期</option>
+                </select>
+            </div>
+
+            <!-- 患者分类标签 -->
+            <div class="category-pills">
+                <button class="pill active" data-cat="all">全部 (<span id="cat-all">0</span>)</button>
+                <button class="pill" data-cat="chronic">慢病 (<span id="cat-chronic">0</span>)</button>
+                <button class="pill" data-cat="acute">急性 (<span id="cat-acute">0</span>)</button>
+                <button class="pill" data-cat="followup">随访 (<span id="cat-followup">0</span>)</button>
+            </div>
+
+            <!-- 患者卡片列表 -->
+            <div id="doctor-patient-list" class="patient-card-list mt-20">
+                <div class="empty-state">暂无患者数据</div>
+            </div>
+        </section>
+
+        <!-- ==================== 医生端：知识库 ==================== -->
+        <section id="page-knowledge-base" class="page">
+            <div class="page-header">
+                <h2><span class="icon">📚</span> 专业知识库</h2>
+            </div>
+
+            <div class="knowledge-categories">
+                <button class="kb-cat active" data-kb="formulas">🌿 中医方剂库</button>
+                <button class="kb-cat" data-kb="guidelines">📋 西医指南</button>
+                <button class="kb-cat" data-kb="nutrition">🍎 膳食营养库</button>
+                <button class="kb-cat" data-kb="acupuncture">📍 经穴图谱</button>
+                <button class="kb-cat" data-kb="drugs">💊 常用药物</button>
+            </div>
+
+            <!-- 知识库搜索 -->
+            <div class="kb-search-bar mt-15">
+                <input type="text" id="kb-search-input" class="form-input" placeholder="搜索知识库...">
+                <button class="btn btn-primary btn-sm" onclick="searchKnowledgeBase()">搜索</button>
+            </div>
+
+            <!-- 知识库内容区 -->
+            <div id="kb-content" class="kb-content-area mt-20">
+                <!-- 动态填充 -->
+            </div>
+        </section>
+
+        <!-- ==================== 管理后台 ==================== -->
+        <section id="page-admin-home" class="page">
+            <div class="page-header">
+                <h2>📊 管理后台</h2>
+                <p class="subtitle">系统管理与数据分析中心</p>
+            </div>
+
+            <!-- 统计概览 -->
+            <div class="admin-stat-cards">
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon icon-users">👥</div>
+                    <div class="admin-stat-info">
+                        <div class="admin-stat-num" id="admin-total-users">0</div>
+                        <div class="admin-stat-label">注册用户</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon icon-doctors">👨‍⚕️</div>
+                    <div class="admin-stat-info">
+                        <div class="admin-stat-num" id="admin-total-doctors">0</div>
+                        <div class="admin-stat-label">认证医生</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon icon-consultations">📋</div>
+                    <div class="admin-stat-info">
+                        <div class="admin-stat-num" id="admin-total-consults">0</div>
+                        <div class="admin-stat-label">总诊疗量</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-icon icon-records">📁</div>
+                    <div class="admin-stat-info">
+                        <div class="admin-stat-num" id="admin-total-records">0</div>
+                        <div class="admin-stat-label">电子病历</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 管理功能网格 -->
+            <div class="admin-menu-grid mt-20">
+                <button class="admin-menu-card" onclick="navigateTo('users')">
+                    <span class="menu-icon">👤</span>
+                    <span class="menu-title">账号管理</span>
+                    <span class="menu-desc">患者/医生账号审核与管理</span>
+                </button>
+                <button class="admin-menu-card" onclick="navigateTo('data')">
+                    <span class="menu-icon">📦</span>
+                    <span class="menu-title">数据管理</span>
+                    <span class="menu-desc">病历、报告、影像数据归档导出</span>
+                </button>
+                <button class="admin-menu-card" onclick="navigateTo('compliance')">
+                    <span class="menu-icon">⚖️</span>
+                    <span class="menu-title">合规管控</span>
+                    <span class="menu-desc">免责声明、敏感词过滤设置</span>
+                </button>
+                <button class="admin-menu-card" onclick="navigateTo('settings')">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-title">系统设置</span>
+                    <span class="menu-desc">网站名称、LOGO、知识库维护</span>
+                </button>
+                <button class="admin-menu-card" onclick="navigateTo('stats')">
+                    <span class="menu-icon">📈</span>
+                    <span class="menu-title">数据统计</span>
+                    <span class="menu-desc">接诊量、患者数据可视化分析</span>
+                </button>
+                <button class="admin-menu-card" onclick="navigateTo('backup')">
+                    <span class="menu-icon">💾</span>
+                    <span class="menu-title">数据备份</span>
+                    <span class="menu-desc">一键备份/恢复所有数据</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 管理子页面容器 -->
+        <div id="admin-sub-pages"></div>
+
+    </main>
+
+    <!-- 底部TabBar（移动端） -->
+    <nav id="bottom-tabbar" class="bottom-tabbar">
+        <button class="tabbar-item active" data-page="home">
+            <span class="tabbar-icon">🏠</span>
+            <span class="tabbar-text">首页</span>
+        </button>
+        <button class="tabbar-item" data-page="tongue">
+            <span class="tabbar-icon">👅</span>
+            <span class="tabbar-text">舌诊</span>
+        </button>
+        <button class="tabbar-item" data-page="consultation">
+            <span class="tabbar-icon">💬</span>
+            <span class="tabbar-text">问诊</span>
+        </button>
+        <button class="tabbar-item" data-page="records">
+            <span class="tabbar-icon">📋</span>
+            <span class="tabbar-text">病历</span>
+        </button>
+        <button class="tabbar-item" data-page="profile">
+            <span class="tabbar-icon">👤</span>
+            <span class="tabbar-text">我的</span>
+        </button>
+    </nav>
+
+    <!-- Toast 通知 -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- 图片查看器 -->
+    <div id="image-viewer-modal" class="modal-overlay image-viewer" style="display:none;">
+        <button class="close-viewer-btn" onclick="closeImageViewer()">✕</button>
+        <img id="viewer-image" src="" alt="预览图片">
+    </div>
+
+    <!-- 方剂选择弹窗 -->
+    <div id="formula-library-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2>📚 中医方剂库</h2>
+                <button class="modal-close" onclick="closeFormulaLibrary()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="formula-search" class="form-input" placeholder="搜索方剂名称或适应症...">
+                <div class="formula-list" id="formula-list">
+                    <!-- JS 动态填充 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ai-engine.js"></script>
+    <script src="js/patient.js"></script>
+    <script src="js/doctor.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
