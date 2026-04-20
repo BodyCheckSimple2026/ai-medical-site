@@ -1,0 +1,49 @@
+/* ==========================================
+   患者端专属样式
+   ========================================== */
+
+/* 健康档案概览 */
+.profile-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+.ps-item {
+    padding: 10px 14px;
+    background: var(--b-primary);
+    border-radius: 8px;
+}
+.ps-item .ps-label { font-size: 12px; color: var(--text-muted); }
+.ps-item .ps-value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+
+/* 处方详情展示 */
+.prescription-detail {
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.pd-header {
+    padding: 14px 18px;
+    background: var(--bg-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pd-header .pd-type { font-weight: 700; font-size: 15px; }
+.pd-header .pd-date { font-size: 12px; color: var(--text-muted); }
+.pd-body { padding: 16px 18px; }
+.pd-drug-list { list-style: none; }
+.pd-drug-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.pd-drug-name { font-weight: 600; min-width: 100px; }
+.pd-drug-spec, .pd-drug-usage { color: var(--text-secondary); font-size: 13px; }
+
+@media (max-width: 600px) {
+    .profile-summary { grid-template-columns: 1fr; }
+}
