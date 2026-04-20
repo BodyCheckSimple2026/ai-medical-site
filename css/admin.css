@@ -1,0 +1,121 @@
+/* ==========================================
+   管理后台专属样式
+   ========================================== */
+
+/* 管理子页面 */
+.admin-sub-page {
+    background: white;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+.asp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background: #fafbfc;
+}
+.asp-header h3 { font-size: 17px; font-weight: 700; }
+.asp-body { padding: 20px 24px; }
+
+/* 账号列表 */
+.account-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.account-table th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    border-bottom: 2px solid var(--border-color);
+}
+.account-table td {
+    padding: 12px 14px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+.account-table tr:hover td { background: #fafbfd; }
+
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.status-pending { background: #fff3cd; color: #856404; }
+.status-approved { background: #d4edda; color: #155724; }
+.status-rejected { background: #f8d7da; color: #721c24; }
+
+.action-btns { display: flex; gap: 6px; }
+
+/* 合规设置 */
+.compliance-section {
+    margin-bottom: 24px;
+    padding: 18px;
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-primary);
+    border-left: 4px solid var(--warning);
+}
+.compliance-section h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.compliance-section textarea {
+    min-height: 100px;
+}
+
+.sensitive-words-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.sensitive-word {
+    padding: 4px 12px;
+    border-radius: 16px;
+    background: white;
+    border: 1px solid var(--border-color);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.sensitive-word .remove-sw {
+    cursor: pointer;
+    color: var(--danger);
+    font-weight: 700;
+}
+
+/* 数据备份 */
+.backup-card {
+    text-align: center;
+    padding: 40px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 2px dashed var(--border-color);
+}
+.backup-icon { font-size: 48px; margin-bottom: 12px; }
+.backup-text { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.backup-hint { font-size: 13px; color: var(--text-muted); }
+
+/* 设置表单 */
+.settings-group {
+    margin-bottom: 28px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+.settings-group h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
