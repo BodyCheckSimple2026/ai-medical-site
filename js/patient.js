@@ -1571,7 +1571,7 @@ function displayComprehensiveAnalysis(result) {
             '<p style="color:#666;margin-bottom:16px;">所有报告均未能识别出有效指标</p>' +
             '<p style="color:#333;margin-bottom:8px;">可能原因：图片模糊、倾斜、光线不足</p>' +
             '</div>' +
-            '<button onclick="switchReportMode('manual')" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:14px 36px;border-radius:8px;font-size:16px;cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.4);">✏️ 切换到手动输入模式</button>' +
+            '<button onclick="switchReportMode(\'manual\')" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:14px 36px;border-radius:8px;font-size:16px;cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.4);">✏️ 切换到手动输入模式</button>' +
             '</div>';
         return;
     }
@@ -3104,7 +3104,9 @@ window.doAnalyzeReportImg=async function(){
 
         if(result){displayReportAnalysis(result);}
 
-        else{var fb = null;  // 已移除模拟数据生成，避免展示假数据if(fb)displayReportAnalysis(fb);}
+        else{var fb = null;  // 已移除模拟数据生成，避免展示假数据
+
+        if(fb)displayReportAnalysis(fb);}
 
     }catch(err){
 
@@ -3156,7 +3158,9 @@ window.doAnalyzeReportPDF=async function(){
 
         if(result){displayReportAnalysis(result);}
 
-        else{var fb = null;  // 已移除模拟数据生成，避免展示假数据if(fb)displayReportAnalysis(fb);}
+        else{var fb = null;  // 已移除模拟数据生成，避免展示假数据
+
+        if(fb)displayReportAnalysis(fb);}
 
     }catch(err){
 
