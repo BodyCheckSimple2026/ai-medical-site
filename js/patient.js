@@ -1523,6 +1523,7 @@ window.clearAllReports = function() {
 
 
     window._reportFileType = null;
+    window._reportFileDataUrl = null;
 
 
 
@@ -1846,7 +1847,7 @@ window.doMultiReportAnalysis = async function() {
 
 
 
-                var result = await analyzeLabReport(reports[i].reportType, reports[i].type === 'image' ? reports[i].dataUrl : null);
+                var result = await analyzeLabReport(reports[i].reportType, reports[i].dataUrl || null);
 
 
 
@@ -6335,6 +6336,7 @@ function previewImage(input,imgId,contId){
 
 
         window._reportFileType='image';
+        window._reportFileDataUrl=e.target.result;
 
 
 
@@ -6467,6 +6469,7 @@ window.previewReportPDF=function(file){
 
 
         window._reportFileType='pdf';
+        window._reportFileDataUrl=e.target.result;
 
 
 
@@ -8825,6 +8828,7 @@ window.retakeReportPhoto=function(){
 
 
     window._reportFileType=null;
+    window._reportFileDataUrl=null;
 
 
 
@@ -9232,7 +9236,15 @@ window.doAnalyzeReportImg=async function(){
 
 
 
-            result=await analyzeLabReport(rt.value, ft==='image'?document.getElementById('report-image'):null);
+            // 优先传dataUrl（PDF和图片都支持），其次传DOM元素
+            var imgDataUrl2 = window._reportFileDataUrl;
+            if (imgDataUrl2) {
+                result = await analyzeLabReport(rt.value, imgDataUrl2);
+            } else if (ft === 'image') {
+                result = await analyzeLabReport(rt.value, document.getElementById('report-image'));
+            } else {
+                result = await analyzeLabReport(rt.value, null);
+            }
 
 
 
@@ -9293,7 +9305,7 @@ if(fb)displayReportAnalysis(fb);else{showToast&&showToast('图片识别失败，
 
 
 
-        try{if(typeof analyzeLabReport==='function'){var r2=await analyzeLabReport(rt.value,null);if(r2)displayReportAnalysis(r2);return;}}catch(e){}
+        try{if(typeof analyzeLabReport==='function'){var r2=await analyzeLabReport(rt.value,window._reportFileDataUrl||null);if(r2)displayReportAnalysis(r2);return;}}catch(e){}
 
 
 
@@ -9383,7 +9395,7 @@ window.doAnalyzeReportPDF=async function(){
 
 
 
-            result=await analyzeLabReport(rt.value, null);
+            result=await analyzeLabReport(rt.value, window._reportFileDataUrl || null);
 
 
 
@@ -9456,7 +9468,7 @@ if(fb)displayReportAnalysis(fb);else{showToast&&showToast('图片识别失败，
 
 
 
-            if(typeof analyzeLabReport==='function'){var r2=await analyzeLabReport(rt.value,null);if(r2)displayReportAnalysis(r2);return;}
+            if(typeof analyzeLabReport==='function'){var r2=await analyzeLabReport(rt.value,window._reportFileDataUrl||null);if(r2)displayReportAnalysis(r2);return;}
 
 
 
@@ -9612,19 +9624,19 @@ window.analyzeReport=async function(){
 
 
 
-            // PDF模式：直接基于报告类型生成模拟数据（不依赖图像识别）
+            // PDF模式：传PDF dataUrl给AI引擎，引擎会自动渲染为图片再OCR
 
 
 
 
 
-            result = null  /* removed simulated data */;
+            result = await analyzeLabReport(rt, window._reportFileDataUrl || null);
 
 
 
 
 
-            console.log('[AI解读] PDF模拟分析结果:', result);
+            console.log('[AI解读] PDF分析结果:', result);
 
 
 
@@ -9636,13 +9648,19 @@ window.analyzeReport=async function(){
 
 
 
-            // 图片模式：调用AI引擎
+            // 图片模式：优先传dataUrl，其次传DOM元素
 
+            var imgDataUrl = window._reportFileDataUrl;
 
+            if (imgDataUrl) {
 
+                result = await analyzeLabReport(rt, imgDataUrl);
 
+            } else {
 
-            result=await analyzeLabReport(rt,document.getElementById('report-image'));
+                result = await analyzeLabReport(rt, document.getElementById('report-image'));
+
+            }
 
 
 
@@ -9702,7 +9720,7 @@ window.analyzeReport=async function(){
 
 
 
-        showToast('已生成模拟分析结果','success');
+        showToast('分析失败，请使用手动输入模式','error');
 
 
 
