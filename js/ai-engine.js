@@ -3174,7 +3174,8 @@ function parseLabItemsFromText(text) {
 var _ocrWorker = null;
 var _ocrWorkerCreating = false;
 
-function ocrRecognizeImage(imageElement) {
+// ★ 从 data URL 字符串执行 OCR（核心函数）
+function ocrRecognizeImageFromSrc(imgSrc) {
 
     return new Promise(function(resolve) {
 
@@ -3188,10 +3189,6 @@ function ocrRecognizeImage(imageElement) {
 
         }
 
-        
-
-        var imgSrc = imageElement.src || '';
-
         if (!imgSrc || imgSrc.indexOf('data:') !== 0) {
 
             console.warn('[OCR] 无有效图片数据');
@@ -3201,8 +3198,6 @@ function ocrRecognizeImage(imageElement) {
             return;
 
         }
-
-        
 
         console.log('[OCR] 开始识别...');
 
@@ -3252,6 +3247,12 @@ function ocrRecognizeImage(imageElement) {
 
     });
 
+}
+
+// ★ 兼容旧接口：从 DOM image 元素执行 OCR
+function ocrRecognizeImage(imageElement) {
+    var imgSrc = imageElement ? (imageElement.src || '') : '';
+    return ocrRecognizeImageFromSrc(imgSrc);
 }
 
 
@@ -3411,16 +3412,26 @@ function buildResultFromParsedItems(parsedItems, reportType) {
 
 
 // ★ 主入口：图片OCR + 解析
+// imageElement 可以是 DOM 元素，也可以是 data URL 字符串，也可以是 null
 
 function analyzeLabReport(reportType, imageElement) {
 
     return new Promise(function(resolve) {
 
-        // 如果有图片，先尝试OCR
+        // ★ 兼容多种图片输入格式
+        var imgSrc = null;
+        if (imageElement && typeof imageElement === 'string' && imageElement.indexOf('data:') === 0) {
+            // 直接传入 data URL 字符串
+            imgSrc = imageElement;
+        } else if (imageElement && imageElement.src && imageElement.src.indexOf('data:') === 0) {
+            // DOM img 元素
+            imgSrc = imageElement.src;
+        }
 
-        if (imageElement && imageElement.src && imageElement.src.indexOf('data:') === 0) {
+        // 如果有图片数据，先尝试OCR
+        if (imgSrc) {
 
-            ocrRecognizeImage(imageElement).then(function(ocrText) {
+            ocrRecognizeImageFromSrc(imgSrc).then(function(ocrText) {
 
                 if (ocrText && ocrText.trim().length > 10) {
 
