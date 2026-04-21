@@ -423,11 +423,39 @@
                         </select>
                     </div>
 
+                    <!-- ★ 输入模式切换 ★ -->
+                    <div class="form-group">
+                        <label>输入方式</label>
+                        <div style="display:flex;gap:8px;margin-top:4px;">
+                            <button type="button" id="btn-mode-upload" class="btn btn-sm" style="flex:1;background:#2563eb;color:#fff;border:1px solid #2563eb;" onclick="switchReportMode('upload')">📷 上传图片</button>
+                            <button type="button" id="btn-mode-text" class="btn btn-sm" style="flex:1;background:#f0f0f0;color:#333;border:1px solid #ddd;" onclick="switchReportMode('text')">✏️ 手动输入</button>
+                        </div>
+                    </div>
+
+                    <!-- ★ 手动输入区域 ★ -->
+                    <div id="report-text-input-area" style="display:none;margin-bottom:16px;">
+                        <div class="form-group">
+                            <label>输入检验指标 <span style="color:#888;font-weight:normal;font-size:12px;">（每行一个指标，格式：指标名 数值 单位，如：白细胞 11.2 ×10⁹/L）</span></label>
+                            <textarea id="report-manual-input" rows="8" placeholder="示例：
+白细胞 11.2 ×10⁹/L
+红细胞 4.8 ×10¹²/L
+血红蛋白 145 g/L
+血小板 218 ×10⁹/L
+甲状旁腺激素 33.638 pg/mL" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:14px;line-height:1.8;resize:vertical;font-family:inherit;"></textarea>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button type="button" class="btn btn-sm btn-primary" style="flex:1;" onclick="doAnalyzeManualInput()">🔍 AI 解读输入指标</button>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('report-manual-input').value=''">清空</button>
+                        </div>
+                        <p style="margin-top:8px;color:#888;font-size:12px;">💡 提示：手动输入最准确，建议优先使用此方式</p>
+                    </div>
+
                     <!-- 多文件批量上传区域 -->
                     <label class="upload-zone" id="report-upload-zone" for="report-file-input" style="cursor:pointer;">
                         <div class="upload-icon">📁</div>
                         <p class="upload-text">点击或拖拽上传检验报告单（<strong style="color:#2563eb;">支持多文件批量上传</strong>）</p>
                         <p class="upload-hint">支持 JPG、PNG 图片 / PDF 文件，可一次选择多个报告文件</p>
+                        <p class="upload-hint" style="color:#e67e22;">⚠️ 图片识别可能不够精准，建议优先使用「手动输入」模式</p>
                     </label>
                     <input type="file" id="report-file-input" accept="image/*,.pdf" multiple
                         onchange="
@@ -1459,6 +1487,7 @@
     </div>
 
     <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="js/data.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/ai-engine.js"></script>
