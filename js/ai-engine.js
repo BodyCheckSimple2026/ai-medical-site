@@ -3004,6 +3004,27 @@ function getLabAliasMap() {
 
 
 
+
+// ★ OCR 文本预处理（提高解析成功率）
+function preprocessOcrText(text) {
+    if (!text) return '';
+    // 1. 去掉常见OCR噪声字符
+    text = text.replace(/[|{}[\]\\]/g, ' ');
+    // 2. 统一空白
+    text = text.replace(/\t/g, '  ');
+    // 3. 处理 OCR 常见错误：数字被识别为字母
+    text = text.replace(/O(?=\d)/g, '0');  // O → 0（数字前）
+    text = text.replace(/(?<=\d)O/g, '0');  // O → 0（数字后）
+    text = text.replace(/l(?=\d)/g, '1');   // l → 1（数字前，小写L）
+    text = text.replace(/I(?=\d)/g, '1');   // I → 1（数字前，大写I）
+    // 4. 将 ↑ ↓ ← → 替换为文字标记
+    text = text.replace(/↑/g, ' H ');
+    text = text.replace(/↓/g, ' L ');
+    // 5. 处理连续的空行
+    text = text.replace(/\n{3,}/g, '\n\n');
+    return text;
+}
+
 // ★ 从OCR/手动输入文本中提取指标
 
 function parseLabItemsFromText(text) {
@@ -3167,6 +3188,69 @@ function parseLabItemsFromText(text) {
 }
 
 
+
+// ★ PDF.js → 图片转换（将 PDF 渲染为 Canvas 再转 data URL）
+function renderPDFToImage(pdfDataUrl) {
+    return new Promise(function(resolve) {
+        if (typeof pdfjsLib === 'undefined') {
+            console.warn('[PDF] pdfjsLib 未加载，无法渲染PDF');
+            resolve(null);
+            return;
+        }
+        // 设置 workerSrc
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        console.log('[PDF] 开始渲染PDF为图片...');
+        async function doRender() {
+            try {
+                // 将 data URL 转为 ArrayBuffer
+                var base64 = pdfDataUrl.split(',')[1];
+                var binaryString = atob(base64);
+                var bytes = new Uint8Array(binaryString.length);
+                for (var i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                var pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+                console.log('[PDF] 共 ' + pdf.numPages + ' 页');
+                // 只渲染第1页（多数检验报告只有1页）
+                var page = await pdf.getPage(1);
+                // 提高分辨率以获得更好的 OCR 效果
+                var scale = 2.0;
+                var viewport = page.getViewport({ scale: scale });
+                var canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                var ctx = canvas.getContext('2d');
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                var imgDataUrl = canvas.toDataURL('image/png');
+                console.log('[PDF] 渲染完成，图片尺寸: ' + canvas.width + 'x' + canvas.height);
+                // 如果有多页，也渲染后续页面
+                var allPages = [imgDataUrl];
+                for (var p = 2; p <= pdf.numPages; p++) {
+                    try {
+                        var pg = await pdf.getPage(p);
+                        var vp = pg.getViewport({ scale: scale });
+                        var cv = document.createElement('canvas');
+                        cv.width = vp.width;
+                        cv.height = vp.height;
+                        var ct = cv.getContext('2d');
+                        await pg.render({ canvasContext: ct, viewport: vp }).promise;
+                        allPages.push(cv.toDataURL('image/png'));
+                        console.log('[PDF] 第 ' + p + ' 页渲染完成');
+                    } catch (pageErr) {
+                        console.warn('[PDF] 第 ' + p + ' 页渲染失败:', pageErr);
+                    }
+                }
+                resolve(allPages);
+            } catch (err) {
+                console.error('[PDF] 渲染失败:', err);
+                resolve(null);
+            }
+        }
+        doRender();
+    });
+}
 
 // ★ Tesseract.js OCR 识别（兼容 v5+ API：createWorker + worker.recognize）
 
@@ -3401,7 +3485,7 @@ function buildResultFromParsedItems(parsedItems, reportType) {
 
         analyzedAt: new Date().toISOString(),
 
-        confidence: Math.floor(88 + Math.random() * 10),
+        confidence: Math.min(85, Math.floor(parsedItems.length * 8 + 30)),
 
         source: 'ocr'  // 标记数据来源
 
@@ -3411,33 +3495,104 @@ function buildResultFromParsedItems(parsedItems, reportType) {
 
 
 
-// ★ 主入口：图片OCR + 解析
-// imageElement 可以是 DOM 元素，也可以是 data URL 字符串，也可以是 null
+// ★ 主入口：图片/PDF OCR + 解析
+// imageElement 可以是 DOM 元素，也可以是 data URL 字符串（图片或PDF），也可以是 null
 
 function analyzeLabReport(reportType, imageElement) {
 
     return new Promise(function(resolve) {
 
-        // ★ 兼容多种图片输入格式
+        // ★ 兼容多种输入格式
         var imgSrc = null;
         if (imageElement && typeof imageElement === 'string' && imageElement.indexOf('data:') === 0) {
-            // 直接传入 data URL 字符串
+            // 直接传入 data URL 字符串（可能是图片也可能是PDF）
             imgSrc = imageElement;
         } else if (imageElement && imageElement.src && imageElement.src.indexOf('data:') === 0) {
             // DOM img 元素
             imgSrc = imageElement.src;
         }
 
-        // 如果有图片数据，先尝试OCR
-        if (imgSrc) {
+        // ★ 检测是否是 PDF
+        var isPDF = imgSrc && imgSrc.indexOf('data:application/pdf') === 0;
+
+        if (isPDF) {
+            // PDF 流程：先渲染为图片，再 OCR
+            console.log('[AI引擎] 检测到PDF文件，开始渲染为图片...');
+            renderPDFToImage(imgSrc).then(function(pageImages) {
+                if (!pageImages || pageImages.length === 0) {
+                    console.warn('[AI引擎] PDF渲染失败');
+                    resolve({
+                        ocrFailed: true,
+                        reportName: '检验报告 — PDF渲染失败',
+                        reportType: reportType,
+                        items: [],
+                        abnormalCount: 0,
+                        overallImpression: '<div style="text-align:center;padding:20px;">' +
+                            '<p style="font-size:18px;color:#e74c3c;margin-bottom:12px;">📄 PDF文件渲染失败</p>' +
+                            '<p style="color:#666;margin-bottom:16px;">可能原因：PDF文件损坏或格式不兼容</p>' +
+                            '<p style="color:#333;font-size:16px;">✏️ 请切换到「手动输入」模式，直接输入指标名称和数值</p>' +
+                            '</div>',
+                        medicalAdvice: ['建议使用「手动输入」模式直接输入指标。'],
+                        analyzedAt: new Date().toISOString(),
+                        confidence: 0,
+                        source: 'pdf-render-failed'
+                    });
+                    return;
+                }
+                // 对每一页进行 OCR
+                var allOcrTexts = [];
+                var ocrPromises = pageImages.map(function(pageImg) {
+                    return ocrRecognizeImageFromSrc(pageImg).then(function(text) {
+                        if (text && text.trim().length > 0) {
+                            allOcrTexts.push(text);
+                        }
+                    });
+                });
+                Promise.all(ocrPromises).then(function() {
+                    var fullOcrText = allOcrTexts.join('\n\n');
+                    console.log('[AI引擎-PDF] OCR完成，总文本长度: ' + fullOcrText.length);
+                    console.log('[AI引擎-PDF] 原文: ' + fullOcrText.substring(0, 500));
+                    if (fullOcrText.trim().length > 10) {
+                        var cleanedText = preprocessOcrText(fullOcrText);
+                        var parsedItems = parseLabItemsFromText(cleanedText);
+                        console.log('[AI引擎-PDF] 识别到 ' + parsedItems.length + ' 个指标');
+                        if (parsedItems.length >= 1) {
+                            var result = buildResultFromParsedItems(parsedItems, reportType);
+                            result.ocrRawText = fullOcrText;
+                            result.source = 'pdf-ocr';
+                            resolve(result);
+                            return;
+                        }
+                    }
+                    // PDF OCR 未能提取有效指标
+                    console.log('[AI引擎-PDF] OCR未能提取有效指标，提示手动输入');
+                    resolve({
+                        ocrFailed: true,
+                        reportName: '检验报告 — PDF识别失败',
+                        reportType: reportType,
+                        items: [],
+                        abnormalCount: 0,
+                        overallImpression: '<div style="text-align:center;padding:20px;">' +
+                            '<p style="font-size:18px;color:#e74c3c;margin-bottom:12px;">📄 PDF识别未能提取有效指标</p>' +
+                            '<p style="color:#666;margin-bottom:16px;">可能原因：PDF内容为扫描图片、文字模糊或格式特殊</p>' +
+                            '<p style="color:#333;font-size:16px;">✏️ 请切换到「手动输入」模式，直接输入指标名称和数值，解读更准确！</p>' +
+                            '</div>',
+                        medicalAdvice: ['建议使用「手动输入」模式直接输入指标，解读更准确。'],
+                        analyzedAt: new Date().toISOString(),
+                        confidence: 0,
+                        source: 'pdf-ocr-failed'
+                    });
+                });
+            });
+        } else if (imgSrc) {
 
             ocrRecognizeImageFromSrc(imgSrc).then(function(ocrText) {
 
                 if (ocrText && ocrText.trim().length > 10) {
 
                     // OCR成功，解析识别出的文本
-
-                    var parsedItems = parseLabItemsFromText(ocrText);
+                    var cleanedText = preprocessOcrText(ocrText);
+                    var parsedItems = parseLabItemsFromText(cleanedText);
 
                     console.log('[OCR解析] 识别到 ' + parsedItems.length + ' 个指标');
 
