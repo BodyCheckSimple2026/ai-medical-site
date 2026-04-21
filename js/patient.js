@@ -1459,6 +1459,62 @@ window.retakeReportPhoto=function(){
     window._reportFileType=null;
     window._reportFileName=null;
 };
+
+// ★ 报告输入模式切换
+window.switchReportMode = function(mode) {
+    var uploadZone = document.getElementById('report-upload-zone');
+    var textArea = document.getElementById('report-text-input-area');
+    var btnUpload = document.getElementById('btn-mode-upload');
+    var btnText = document.getElementById('btn-mode-text');
+    var fileInput = document.getElementById('report-file-input');
+    
+    if (mode === 'text') {
+        if (uploadZone) uploadZone.style.display = 'none';
+        if (fileInput) fileInput.style.display = 'none';
+        if (textArea) textArea.style.display = 'block';
+        if (btnText) { btnText.style.background = '#2563eb'; btnText.style.color = '#fff'; btnText.style.borderColor = '#2563eb'; }
+        if (btnUpload) { btnUpload.style.background = '#f0f0f0'; btnUpload.style.color = '#333'; btnUpload.style.borderColor = '#ddd'; }
+    } else {
+        if (uploadZone) uploadZone.style.display = '';
+        if (fileInput) fileInput.style.display = '';
+        if (textArea) textArea.style.display = 'none';
+        if (btnUpload) { btnUpload.style.background = '#2563eb'; btnUpload.style.color = '#fff'; btnUpload.style.borderColor = '#2563eb'; }
+        if (btnText) { btnText.style.background = '#f0f0f0'; btnText.style.color = '#333'; btnText.style.borderColor = '#ddd'; }
+    }
+};
+
+// ★ 手动输入模式 - AI解读
+window.doAnalyzeManualInput = async function() {
+    var rt = document.getElementById('report-type-select');
+    if (!rt || !rt.value) { showToast('请先选择报告类型', 'warning'); return; }
+    
+    var textArea = document.getElementById('report-manual-input');
+    if (!textArea || !textArea.value.trim()) { showToast('请输入检验指标数据', 'warning'); return; }
+    
+    showToast('AI解读中...', 'info');
+    
+    try {
+        var result = null;
+        if (typeof analyzeLabReportFromText === 'function') {
+            result = await analyzeLabReportFromText(rt.value, textArea.value);
+        }
+        
+        if (result && result.error) { showToast(result.error, 'error'); return; }
+        if (result) {
+            displayReportAnalysis(result);
+        } else {
+            // 兜底
+            if (typeof generateSimulatedReportData === 'function') {
+                var fb = await generateSimulatedReportData(rt.value);
+                if (fb) displayReportAnalysis(fb);
+            }
+        }
+    } catch (err) {
+        console.error('[手动输入解读]', err);
+        showToast('解读出错，请检查输入格式', 'error');
+    }
+};
+
 // 报告解读 - 供图片预览区按钮调用（统一使用增强版分析引擎）
 window.doAnalyzeReportImg=async function(){
     var rt=document.getElementById('report-type-select');
@@ -1466,7 +1522,7 @@ window.doAnalyzeReportImg=async function(){
     var ft=window._reportFileType;
     if(!ft){var ie=document.getElementById('report-image');if(ie&&ie.src&&ie.src.indexOf('data:')===0)ft='image';}
     if(!ft){showToast&&showToast('请先上传报告','warning');return;}
-    showToast&&showToast('AI解读中...','info');
+    showToast&&showToast('AI OCR识别中，请稍候（图片识别可能不够精准，建议使用手动输入模式）...','info');
     try{
         var result;
         // 统一使用 analyzeLabReport 引擎（PDF和图片都走同一套专业分析）
@@ -1623,18 +1679,41 @@ function displayReportAnalysis(r){
     var abd=document.getElementById('abnormal-summary');abd.style.display=abnCount>0?'block':'none';
     if(abnCount>0)abd.innerHTML='⚠️ <strong>检测出 '+abnCount+' 项异常指标</strong>，请结合临床症状评估';
 
+    // ★ 数据来源标识
+    var sourceTag = '';
+    if (r.source === 'ocr') sourceTag = '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:4px;font-size:11px;margin-left:8px;">📷 图片识别</span>';
+    else if (r.source === 'manual') sourceTag = '<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:4px;font-size:11px;margin-left:8px;">✏️ 手动输入</span>';
+    else if (r.source === 'template') sourceTag = '<span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:4px;font-size:11px;margin-left:8px;">📋 模板参考（非实际数据）</span>';
+
     var items=r.items||[];
     var tb='';
-    if(items.length===0){tb='<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">暂无详细指标数据</td></tr>';}
+    if(items.length===0){tb='<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">暂无详细指标数据'+sourceTag+'</td></tr>';}
     else{
         items.forEach(function(it){
-            var sc=it.status==='normal'?'status-normal':it.status==='abnormal'?'status-abnormal':it.status==='warning'?'status-warning':'status-normal';
-            var st=it.status==='normal'?'正常':it.status==='abnormal'?'⚠ 异常':it.status==='warning'?'⚡ 临界':'';
-            tb+='<tr><td><strong>'+(it.name||'-')+'</strong></td><td style="color:'+(it.status!=='normal'?'#ea4335':'#333')+';font-weight:600;">'+(it.value||'-')+(it.unit||'')+'</td><td>'+(it.ref||'-')+'</td><td class="'+sc+'">'+st+'</td><td style="font-size:12px;color:#666;">'+(it.desc||'-')+'</td></tr>';
+            // ★ 兼容 high/low/normal 和 abnormal/warning/normal 两种状态格式
+            var statusClass, statusText;
+            if(it.status==='high'){statusClass='status-abnormal';statusText='↑ 偏高';}
+            else if(it.status==='low'){statusClass='status-warning';statusText='↓ 偏低';}
+            else if(it.status==='abnormal'){statusClass='status-abnormal';statusText='⚠ 异常';}
+            else if(it.status==='warning'){statusClass='status-warning';statusText='⚡ 临界';}
+            else{statusClass='status-normal';statusText='正常';}
+            
+            var valColor = it.status!=='normal'?'#ea4335':'#333';
+            var refRange = it.ref || '-';
+            // 如果没有ref字段但有refLow/refHigh，构建参考范围
+            if(refRange==='-' && (it.refLow!=null || it.refHigh!=null)){
+                if(typeof it.refLow==='number' && typeof it.refHigh==='number') refRange=it.refLow+'-'+it.refHigh;
+                else if(typeof it.refHigh==='number') refRange='<'+it.refHigh;
+                else if(typeof it.refLow==='number') refRange='>'+it.refLow;
+            }
+            // 解读优先用interpretation，其次用desc
+            var interp = it.interpretation || it.desc || '-';
+            
+            tb+='<tr><td><strong>'+(it.name||'-')+'</strong></td><td style="color:'+valColor+';font-weight:600;">'+(it.value!=null?it.value:'-')+(it.unit?' '+it.unit:'')+'</td><td>'+refRange+'</td><td class="'+statusClass+'">'+statusText+'</td><td style="font-size:12px;color:#666;">'+interp+'</td></tr>';
         });
     }
     document.getElementById('report-tbody').innerHTML=tb;
-    document.getElementById('report-interpretation').innerHTML='<div class="interpretation-text">'+(r.interpretation||r.overallImpression||'解读完成')+'</div>';
+    document.getElementById('report-interpretation').innerHTML='<div class="interpretation-text">'+(r.interpretation||r.overallImpression||'解读完成')+sourceTag+'</div>';
     // medicalAdvice 可能是字符串或数组
     var advArr = Array.isArray(r.medicalAdvice) ? r.medicalAdvice : ((typeof r.medicalAdvice === 'string' && r.medicalAdvice) ? [r.medicalAdvice] : []);
     if(advArr.length===0)advArr=['暂无特别建议，请结合临床综合评估。'];
