@@ -3168,7 +3168,11 @@ function parseLabItemsFromText(text) {
 
 
 
-// ★ Tesseract.js OCR 识别
+// ★ Tesseract.js OCR 识别（兼容 v5+ API：createWorker + worker.recognize）
+
+// 全局 OCR Worker 缓存，避免重复创建
+var _ocrWorker = null;
+var _ocrWorkerCreating = false;
 
 function ocrRecognizeImage(imageElement) {
 
@@ -3204,37 +3208,47 @@ function ocrRecognizeImage(imageElement) {
 
         var startTime = Date.now();
 
-        
-
-        Tesseract.recognize(imgSrc, 'chi_sim+eng', {
-
-            logger: function(m) {
-
-                if (m.status === 'recognizing text') {
-
-                    console.log('[OCR] 进度: ' + Math.round((m.progress || 0) * 100) + '%');
-
+        // ★ Tesseract.js v5+ API：先创建 worker，再 recognize
+        async function doOCR() {
+            try {
+                // 复用已有 worker
+                if (!_ocrWorker) {
+                    console.log('[OCR] 创建 Tesseract worker...');
+                    _ocrWorker = await Tesseract.createWorker('chi_sim+eng', 1, {
+                        logger: function(m) {
+                            if (m.status === 'recognizing text') {
+                                console.log('[OCR] 进度: ' + Math.round((m.progress || 0) * 100) + '%');
+                            }
+                        }
+                    });
+                    console.log('[OCR] Worker 创建完成');
                 }
 
+                var result = await _ocrWorker.recognize(imgSrc);
+
+                var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+                console.log('[OCR] 识别完成，耗时 ' + elapsed + 's');
+
+                var ocrText = result.data ? (result.data.text || '') : '';
+
+                console.log('[OCR] 原文: ' + ocrText.substring(0, 500));
+
+                resolve(ocrText);
+
+            } catch (err) {
+
+                console.error('[OCR] 识别失败:', err);
+
+                // worker 出错时重置，下次重新创建
+                _ocrWorker = null;
+
+                resolve(null);
+
             }
+        }
 
-        }).then(function(result) {
-
-            var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
-            console.log('[OCR] 识别完成，耗时 ' + elapsed + 's');
-
-            console.log('[OCR] 原文: ' + (result.data.text || '').substring(0, 500));
-
-            resolve(result.data.text || '');
-
-        }).catch(function(err) {
-
-            console.error('[OCR] 识别失败:', err);
-
-            resolve(null);
-
-        });
+        doOCR();
 
     });
 
